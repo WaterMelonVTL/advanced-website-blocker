@@ -15,17 +15,10 @@ One Manifest V3 codebase for **Firefox (128+), Chrome, Brave and Edge**.
 
 ## Install
 ### Chrome / Brave / Edge
-1. Open `chrome://extensions` (or `brave://extensions`, `edge://extensions`).
-2. Turn on **Developer mode** and click **Load unpacked**, then select this folder.
-3. In the extension's details, enable **Allow in Incognito** (otherwise incognito gets around the block).
-
-It stays installed across restarts. If you move or delete the folder, the extension breaks.
+Soon
 
 ### Firefox
-- **Testing:** `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on…" → pick `manifest.json`. It's removed when Firefox restarts.
-- **Permanent:** sign it for free as an *unlisted* add-on with `npx web-ext sign --channel=unlisted --api-key=... --api-secret=...` (keys from addons.mozilla.org → Developer Hub → API keys), then open the `.xpi`.
-- In `about:addons` → Advanced Website Blocker, allow **Run in Private Windows**.
-- If the options page shows "needs access to all sites", click **Allow**.
+Download and install the following : https://addons.mozilla.org/firefox/downloads/file/5239837/585a92a8e3bb4a70a2b7-2.2.0.xpi
 
 ## How it works
 **`shared/`**: used by the background and the pages
