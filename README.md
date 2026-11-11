@@ -46,3 +46,6 @@ Plain ES modules, no build step. One concern per file.
 - `messages.js`: answers the pages' requests
 
 **`blocked/`, `popup/`, `options/`**: the block page, toolbar popup and settings page. Each section of a page is its own module.
+
+## License
+[MIT No Attribution (MIT-0)](LICENSE), an OSI-approved open-source license. Use, copy, modify, sell or redistribute it for any purpose, without crediting anyone or keeping the license notice.
