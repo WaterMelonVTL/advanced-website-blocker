@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon.svg" alt="" width="20" height="20">
+    <strong>Friction Blocker</strong>
+  </header>
+
+  <section>
+    <div class="site-name" id="site-name"></div>
+    <div id="site-status" class="small muted"></div>
+    <div id="block-form" class="row hidden">
+      <select id="block-mode" aria-label="When to block">
+        <option value="always">Always</option>
+        <option value="schedule">On schedule</option>
+      </select>
+      <button id="block-site" class="primary">Block this site</button>
+    </div>
+    <div id="block-confirmation" class="confirmation hidden">
+      <p class="small">Block <strong id="confirmation-domain"></strong>? Removing it later takes 24 hours.</p>
+      <div class="row">
+        <button id="cancel-block">Cancel</button>
+        <button id="confirm-block" class="primary">Confirm</button>
+      </div>
+    </div>
+    <p id="block-error" class="small error hidden"></p>
+  </section>
+
+  <section id="unlocked-section" class="hidden">
+    <h3 class="small muted">Unlocked right now</h3>
+    <ul id="unlocked-sites"></ul>
+  </section>
+
+  <footer>
+    <button id="open-options" class="link">Manage sites &amp; schedules</button>
+  </footer>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+:root {
+  --bg: #faf8f5;
+  --surface: #ffffff;
+  --surface-2: #f2eee8;
+  --text: #1f1b16;
+  --muted: #6b6359;
+  --border: #e3ddd4;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-soft: #fde8dc;
+  --ok: #15803d;
+  --ok-soft: #dcf3e3;
+  --bad: #b91c1c;
+  --bad-soft: #fde2e2;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17140f;
+    --surface: #211d17;
+    --surface-2: #2b261f;
+    --text: #f3eee7;
+    --muted: #a69c8f;
+    --border: #3a342b;
+    --accent: #f07a3c;
+    --accent-hover: #ff935a;
+    --accent-soft: #3b2417;
+    --ok: #4ade80;
+    --ok-soft: #173322;
+    --bad: #f87171;
+    --bad-soft: #3d1a1a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--font);
+}
+
+h1, h2, h3 { line-height: 1.2; margin: 0 0 .5em; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.15rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.hidden { display: none !important; }
+
+button, .btn {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: .45em .9em;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: var(--surface-2); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+button.link {
+  border: none; background: none; padding: 0; color: var(--accent); text-decoration: underline;
+}
+button.link:hover:not(:disabled) { background: none; }
+button.danger { color: var(--bad); }
+
+input, select, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .45em .6em;
+}
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.pill {
+  display: inline-block;
+  font-size: .75rem;
+  padding: .1em .6em;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pill.blocked { background: var(--accent-soft); color: var(--accent); }
+.pill.open { background: var(--ok-soft); color: var(--ok); }
+.pill.removing { background: var(--bad-soft); color: var(--bad); }
+
+.error { color: var(--bad); }

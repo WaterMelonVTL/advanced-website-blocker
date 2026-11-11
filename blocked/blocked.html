@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blocked</title>
+  <link rel="icon" href="../icons/icon.svg">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="blocked.css">
+</head>
+<body>
+  <main>
+    <svg class="mascot" viewBox="0 0 160 160" role="img" aria-label="A grumpy padlock with its arms crossed">
+      <ellipse cx="80" cy="150" rx="44" ry="6" class="shadow"/>
+      <g class="bobbing">
+        <path d="M52 70V52a28 28 0 0 1 56 0v18" fill="none" class="shackle" stroke-width="12" stroke-linecap="round"/>
+        <rect x="30" y="64" width="100" height="78" rx="22" class="lock-body"/>
+        <path d="M52 86l14 5M108 86l-14 5" class="eyebrows" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="62" cy="100" r="8" class="eye"/><circle cx="98" cy="100" r="8" class="eye"/>
+        <circle cx="64.5" cy="97.5" r="2.6" class="eye-glint"/><circle cx="100.5" cy="97.5" r="2.6" class="eye-glint"/>
+        <ellipse cx="48" cy="114" rx="7" ry="4" class="blush"/><ellipse cx="112" cy="114" rx="7" ry="4" class="blush"/>
+        <path d="M70 122q10-6 20 0" fill="none" class="mouth" stroke-width="4" stroke-linecap="round"/>
+        <path d="M34 128q46 18 92 0" fill="none" class="arms" stroke-width="10" stroke-linecap="round"/>
+      </g>
+      <text x="128" y="38" class="speech">nope.</text>
+    </svg>
+    <h1>This page is blocked</h1>
+    <p class="blocked-domain"><span id="blocked-domain"></span></p>
+    <p class="muted" id="block-reason"></p>
+    <p class="muted small" id="visit-count"></p>
+
+    <section class="alternatives">
+      <h2>Go there instead:</h2>
+      <div id="alternatives-grid" class="alternatives-grid"></div>
+      <p id="no-alternatives" class="muted small hidden">No suggestions yet.
+        <button id="set-up-alternatives" class="link">Add a few sites you'd rather be on</button>.</p>
+    </section>
+
+    <details id="unlock-section" class="unlock-section">
+      <summary>I really need this site</summary>
+
+      <section id="typing-challenge" class="card hidden">
+        <h2>Really need it?</h2>
+        <p class="muted small">
+          Type the text below exactly (no pasting). After that, the site unlocks in
+          <strong id="wait-duration"></strong> and stays open for <strong id="unlock-duration"></strong>.
+        </p>
+        <div id="expected-text" class="expected-text" aria-hidden="true"></div>
+        <label for="typed-text" class="sr-only">Type the text above</label>
+        <textarea id="typed-text" rows="4" autocomplete="off" autocorrect="off" autocapitalize="off"
+          spellcheck="false" placeholder="Start typing…"></textarea>
+        <div class="row">
+          <span id="typing-status" class="muted small"></span>
+          <button id="start-countdown" class="primary" disabled>Start the countdown</button>
+        </div>
+        <p id="typing-error" class="error small hidden"></p>
+      </section>
+
+      <section id="countdown" class="card hidden">
+        <h2>Unlocking in</h2>
+        <div id="countdown-clock" class="countdown-clock">0:00</div>
+        <p class="muted small" id="unlock-window"></p>
+        <p class="muted small">You can leave this tab; the countdown keeps going. If you stay, it opens the page when it ends.</p>
+        <button id="give-up">Never mind, back to work</button>
+      </section>
+
+      <section id="not-blocked" class="card hidden">
+        <h2>This site isn't blocked right now</h2>
+        <button id="continue" class="primary">Continue to the page</button>
+      </section>
+    </details>
+
+    <p id="gave-up-message" class="success-message hidden">Good call. The countdown was cancelled.</p>
+  </main>
+  <script type="module" src="blocked.js"></script>
+</body>
+</html>

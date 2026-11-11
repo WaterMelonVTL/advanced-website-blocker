@@ -1,0 +1,50 @@
+const URL_SCHEME = /^[a-z][a-z0-9+.-]*:\/\//;
+const CREDENTIALS = /^[^@/]*@/;
+const PATH_QUERY_OR_HASH = /[/?#]/;
+const PORT = /:\d+$/;
+const WILDCARD_PREFIX = /^\*\./;
+const WWW_PREFIX = /^www\./;
+const TRAILING_DOTS = /\.+$/;
+const VALID_DOMAIN = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+
+/** Turns user input like "https://www.YouTube.com/watch?v=1" into "youtube.com", or "" when invalid. */
+export function domainFromUserInput(input) {
+  const host = String(input ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(URL_SCHEME, "")
+    .replace(CREDENTIALS, "")
+    .split(PATH_QUERY_OR_HASH)[0];
+
+  const domain = host
+    .replace(PORT, "")
+    .replace(WILDCARD_PREFIX, "")
+    .replace(WWW_PREFIX, "")
+    .replace(TRAILING_DOTS, "");
+
+  const isValid = VALID_DOMAIN.test(domain) || domain === "localhost";
+  return isValid ? domain : "";
+}
+
+/** Hostname of an http(s) URL, or "" for anything else (about: pages, extension pages...). */
+export function webHostnameOf(url) {
+  const parsedUrl = parseUrl(url);
+  if (!parsedUrl) return "";
+
+  const isWebPage = parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  if (!isWebPage) return "";
+
+  return parsedUrl.hostname.toLowerCase().replace(TRAILING_DOTS, "");
+}
+
+export function isSameOrSubdomain(hostname, domain) {
+  return hostname === domain || hostname.endsWith("." + domain);
+}
+
+export function parseUrl(url) {
+  try {
+    return new URL(url);
+  } catch {
+    return null;
+  }
+}

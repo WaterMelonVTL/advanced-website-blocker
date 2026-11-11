@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Friction Blocker</title>
+  <link rel="icon" href="../icons/icon.svg">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="../icons/icon.svg" alt="" width="32" height="32">
+      <h1>Friction Blocker</h1>
+    </header>
+
+    <div id="permission-notice" class="notice hidden">
+      <strong>One more step:</strong> the extension needs access to all sites to block them.
+      <button id="grant-permission" class="primary">Allow</button>
+    </div>
+
+    <p class="muted small intro">Edits here are only a draft until you click <strong>Confirm</strong>.
+      After that, anything that weakens blocking (removing a site, removing schedule time, a shorter wait,
+      a longer unlock) waits 24 hours. Anything that makes blocking stricter applies right away.</p>
+
+    <section class="card">
+      <h2>Blocked sites</h2>
+      <form id="add-site-form" class="inline-form">
+        <input id="new-site-domain" type="text" placeholder="youtube.com" aria-label="Domain to block" required>
+        <select id="new-site-mode" aria-label="When to block">
+          <option value="always">Always</option>
+          <option value="schedule">On schedule</option>
+        </select>
+        <button class="primary" type="submit">Add</button>
+      </form>
+      <p id="add-site-error" class="error small hidden"></p>
+      <p class="muted small">Subdomains are included: <code>youtube.com</code> also blocks <code>m.youtube.com</code>.</p>
+      <ul id="site-list" class="item-list"></ul>
+      <p id="no-sites" class="muted hidden">No sites yet.</p>
+    </section>
+
+    <section class="card">
+      <h2>Schedules</h2>
+      <p class="muted small">Sites set to <em>On schedule</em> are blocked while any of these periods is active.
+        A period ending before it starts (e.g. 22:00 → 02:00) runs overnight.</p>
+      <div id="pending-schedule-notice" class="notice small hidden">
+        A schedule change is confirmed and applies on <strong id="pending-schedule-date"></strong>.
+        Until then, the old and new schedules both block.
+        <button id="revert-schedule" class="link">Go back to the current schedule</button>
+      </div>
+      <div id="schedule-list"></div>
+      <p id="no-schedules" class="muted small hidden">No periods. Sites set to <em>On schedule</em> won't be blocked.</p>
+      <button id="add-schedule">+ Add period</button>
+    </section>
+
+    <section class="card">
+      <h2>Unlocking</h2>
+      <div class="settings">
+        <label>Wait after typing the sentence
+          <span><input id="wait-minutes" type="number" min="0" max="120"> minutes</span>
+        </label>
+        <p id="wait-minutes-pending" class="pending-note small"></p>
+        <label>Stay unlocked for
+          <span><input id="unlock-minutes" type="number" min="1" max="240"> minutes</span>
+        </label>
+        <p id="unlock-minutes-pending" class="pending-note small"></p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Go there instead</h2>
+      <p class="muted small">Shown as a grid on the block page, so there's always a better place one click away.
+        These save immediately.</p>
+      <form id="add-alternative-form" class="inline-form">
+        <input id="alternative-name" type="text" placeholder="Name (optional)" aria-label="Name">
+        <input id="alternative-address" type="text" placeholder="moodle.my-school.edu" aria-label="Address" required>
+        <button class="primary" type="submit">Add</button>
+      </form>
+      <p id="add-alternative-error" class="error small hidden"></p>
+      <ul id="alternative-list" class="item-list"></ul>
+    </section>
+  </main>
+
+  <aside id="review-bar" class="review-bar hidden" aria-live="polite">
+    <div class="review-bar-content">
+      <div class="change-groups">
+        <div id="immediate-changes"><h3>Applies right away</h3><ul id="immediate-change-list"></ul></div>
+        <div id="after-cooldown-changes"><h3>Applies in 24 hours</h3><ul id="after-cooldown-change-list"></ul></div>
+      </div>
+      <div class="review-bar-actions">
+        <button id="discard-draft">Discard</button>
+        <button id="confirm-draft" class="primary">Confirm</button>
+      </div>
+    </div>
+  </aside>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

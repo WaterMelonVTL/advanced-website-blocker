@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Friction Blocker",
+  "version": "2.0.0",
+  "description": "Block distracting websites, on a schedule if you like, and make unblocking take some deliberate effort.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "friction-blocker@local",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background/main.js",
+    "scripts": ["background/main.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Friction Blocker",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked/blocked.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
