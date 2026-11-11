@@ -1,6 +1,21 @@
+/** NEVER makes a site an exception: music.youtube.com set to NEVER stays open while youtube.com is blocked. */
 export const BLOCK_MODE = Object.freeze({
   ALWAYS: "always",
   ON_SCHEDULE: "schedule",
+  NEVER: "never",
+});
+
+export const BLOCK_MODE_LABELS = Object.freeze({
+  [BLOCK_MODE.ALWAYS]: "Always",
+  [BLOCK_MODE.ON_SCHEDULE]: "On schedule",
+  [BLOCK_MODE.NEVER]: "Never (allow)",
+});
+
+/** Higher blocks more: a switch to a lower rank weakens blocking. */
+export const BLOCK_MODE_STRICTNESS = Object.freeze({
+  [BLOCK_MODE.NEVER]: 0,
+  [BLOCK_MODE.ON_SCHEDULE]: 1,
+  [BLOCK_MODE.ALWAYS]: 2,
 });
 
 /** NONE: no unlock. WAITING: sentence typed, delay running. OPEN: site open until the unlock closes. */

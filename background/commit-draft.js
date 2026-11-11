@@ -3,7 +3,7 @@ import { COOLDOWN_MS, SETTING_LIMITS } from "../shared/constants.js";
 import { domainFromUserInput } from "../shared/domains.js";
 import { enforceBlocking } from "./enforcement.js";
 import { createSite, toBlockMode } from "./sites.js";
-import { currentConfig, findSiteByDomain, saveState, state } from "./state.js";
+import { currentConfig, findSiteByDomain, removeSite, saveState, state } from "./state.js";
 
 const TIME_OF_DAY = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -13,7 +13,7 @@ export async function commitDraft(draft) {
   const cooldownEndsAt = Date.now() + COOLDOWN_MS;
   changes.forEach((change) => APPLY_CHANGE[change.type](change, cooldownEndsAt));
 
-  await saveState("sites", "schedules", "settings", "pendingChanges");
+  await saveState("sites", "schedules", "settings", "unlocks", "pendingChanges");
   await enforceBlocking();
   return { ok: true, changes };
 }
@@ -70,9 +70,14 @@ function sanitizeSettings(draftSettings) {
   return Object.fromEntries(sanitizedEntries);
 }
 
-function addSite({ domain, mode }) {
+function addSite({ domain, mode, modeDuringCooldown, waitsForCooldown }, cooldownEndsAt) {
   if (findSiteByDomain(domain)) return;
-  state.sites.push(createSite(domain, mode));
+  if (!waitsForCooldown) {
+    state.sites.push(createSite(domain, mode));
+    return;
+  }
+  state.sites.push(createSite(domain, modeDuringCooldown));
+  state.pendingChanges.siteModes[domain] = { mode, applyAt: cooldownEndsAt };
 }
 
 function setMode({ domain, mode, waitsForCooldown }, cooldownEndsAt) {
@@ -91,9 +96,11 @@ function cancelModeSwitch({ domain }) {
   delete state.pendingChanges.siteModes[domain];
 }
 
-function scheduleRemoval({ domain }, cooldownEndsAt) {
+function removeOrScheduleRemoval({ domain, waitsForCooldown }, cooldownEndsAt) {
   const site = findSiteByDomain(domain);
-  if (site && !site.removeAt) site.removeAt = cooldownEndsAt;
+  if (!site || site.removeAt) return;
+  if (waitsForCooldown) site.removeAt = cooldownEndsAt;
+  else removeSite(domain);
 }
 
 function cancelRemoval({ domain }) {
@@ -124,7 +131,7 @@ const APPLY_CHANGE = Object.freeze({
   [CHANGE_TYPE.ADD_SITE]: addSite,
   [CHANGE_TYPE.SET_MODE]: setMode,
   [CHANGE_TYPE.CANCEL_MODE_SWITCH]: cancelModeSwitch,
-  [CHANGE_TYPE.SCHEDULE_REMOVAL]: scheduleRemoval,
+  [CHANGE_TYPE.REMOVE_SITE]: removeOrScheduleRemoval,
   [CHANGE_TYPE.CANCEL_REMOVAL]: cancelRemoval,
   [CHANGE_TYPE.SET_SCHEDULES]: setSchedules,
   [CHANGE_TYPE.SET_SETTING]: setSetting,

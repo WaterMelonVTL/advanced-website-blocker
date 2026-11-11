@@ -1,5 +1,5 @@
 import { enforceBlocking } from "./enforcement.js";
-import { findSiteByDomain, saveState, state, stateReady } from "./state.js";
+import { findSiteByDomain, removeSite, saveState, state, stateReady } from "./state.js";
 
 /** Runs when the background wakes up: applies what's due, then enforces blocking. */
 export async function runHousekeeping() {
@@ -60,18 +60,12 @@ function applyDueModeSwitches(now) {
   return dueDomains.length > 0 ? ["sites", "pendingChanges"] : [];
 }
 
-function forgetSite(domain) {
-  delete state.unlocks[domain];
-  delete state.pendingChanges.siteModes[domain];
-}
-
 function removeSitesDueForRemoval(now) {
   const isDueForRemoval = (site) => site.removeAt && site.removeAt <= now;
   const removedDomains = state.sites.filter(isDueForRemoval).map((site) => site.domain);
   if (removedDomains.length === 0) return [];
 
-  state.sites = state.sites.filter((site) => !isDueForRemoval(site));
-  removedDomains.forEach(forgetSite);
+  removedDomains.forEach(removeSite);
   return ["sites", "unlocks", "pendingChanges"];
 }
 

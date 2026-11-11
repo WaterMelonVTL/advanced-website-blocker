@@ -4,6 +4,11 @@ import { enforceBlocking } from "./enforcement.js";
 import { findSiteByDomain, saveState, state } from "./state.js";
 
 export function toBlockMode(value) {
+  return Object.values(BLOCK_MODE).includes(value) ? value : BLOCK_MODE.ALWAYS;
+}
+
+/** The popup only blocks: allowing a site goes through the options page and its cooldown. */
+function toStrictBlockMode(value) {
   return value === BLOCK_MODE.ON_SCHEDULE ? BLOCK_MODE.ON_SCHEDULE : BLOCK_MODE.ALWAYS;
 }
 
@@ -28,7 +33,7 @@ export async function blockSiteNow(address, mode) {
   const domain = domainFromUserInput(address);
   if (!domain) return { ok: false, error: "That doesn't look like a valid domain." };
 
-  listOrKeepSite(domain, mode);
+  listOrKeepSite(domain, toStrictBlockMode(mode));
   await saveState("sites");
   await enforceBlocking();
   return { ok: true, domain };

@@ -6,11 +6,12 @@ One Manifest V3 codebase for **Firefox (128+), Chrome, Brave and Edge**.
 ## Features
 - **Block list**: add domains from the options page or with the toolbar button ("Block this site", then Confirm). Subdomains are included.
 - **Schedules**: each site is either *Always* blocked or blocked *On schedule* (days + time ranges, overnight ranges supported).
+- **Allowed subdomains**: set a site to *Never (allow)* to make it an exception, e.g. `music.youtube.com` stays open while `youtube.com` is blocked. The most specific listed domain wins.
 - **Block page**: a grumpy padlock, how often you landed there today, and a **"Go there instead"** grid of sites you'd rather be on (set up in the options page).
 - **Unlock friction**: open "I really need this site" and type
   `I'm sure what I'm doing is worth it, that's why I will type the following sentence: <random sentence>`
   without pasting. After a wait (default 5 min) the site unlocks for a window (default 20 min). When the window ends, open tabs go back to the block page. You can re-lock early from the popup.
-- **24-hour cooldown on anything that weakens blocking**: removing a site, switching it from *Always* to *On schedule*, removing schedule time, a shorter wait, or a longer unlock all take effect 24 hours after you confirm. You can take them back before then. Changes that make blocking stricter apply right away. While a schedule change is pending, the old and new schedules both block.
+- **24-hour cooldown on anything that weakens blocking**: removing a site, switching it to a less strict mode (*Always* → *On schedule* → *Never*), allowing a subdomain of a blocked site, removing schedule time, a shorter wait, or a longer unlock all take effect 24 hours after you confirm. You can take them back before then. Changes that make blocking stricter apply right away. While a schedule change is pending, the old and new schedules both block.
 
 ## Install
 ### Chrome / Brave / Edge

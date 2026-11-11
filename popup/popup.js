@@ -1,6 +1,6 @@
 import { isBlockPageAddress, parseBlockPageAddress } from "../shared/block-page-address.js";
 import { askBackground, browserApi, MESSAGE } from "../shared/browser.js";
-import { UNLOCK_PHASE } from "../shared/constants.js";
+import { BLOCK_MODE, UNLOCK_PHASE } from "../shared/constants.js";
 import { byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { formatClockTime, formatCountdown, formatDayAndTime } from "../shared/format.js";
 
@@ -50,6 +50,7 @@ async function renderActiveSite() {
 function describeActiveSiteStatus(hostname, site) {
   if (!hostname) return "";
   if (!site) return "Not blocked";
+  if (site.mode === BLOCK_MODE.NEVER) return "Allowed (exception on your list)";
   if (site.removeAt) return `On your list until ${formatDayAndTime(site.removeAt)}`;
   if (site.unlock.phase === UNLOCK_PHASE.OPEN) return `Unlocked until ${formatClockTime(site.unlock.closesAt)}`;
   if (site.unlock.phase === UNLOCK_PHASE.WAITING) return `Unlocks at ${formatClockTime(site.unlock.opensAt)}`;

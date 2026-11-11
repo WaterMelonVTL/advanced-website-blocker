@@ -21,8 +21,8 @@
     </div>
 
     <p class="muted small intro">Edits here are only a draft until you click <strong>Confirm</strong>.
-      After that, anything that weakens blocking (removing a site, removing schedule time, a shorter wait,
-      a longer unlock) waits 24 hours. Anything that makes blocking stricter applies right away.</p>
+      After that, anything that weakens blocking (removing a site, allowing a subdomain, removing schedule time,
+      a shorter wait, a longer unlock) waits 24 hours. Anything that makes blocking stricter applies right away.</p>
 
     <section class="card">
       <h2>Blocked sites</h2>
@@ -31,11 +31,14 @@
         <select id="new-site-mode" aria-label="When to block">
           <option value="always">Always</option>
           <option value="schedule">On schedule</option>
+          <option value="never">Never (allow)</option>
         </select>
         <button class="primary" type="submit">Add</button>
       </form>
       <p id="add-site-error" class="error small hidden"></p>
-      <p class="muted small">Subdomains are included: <code>youtube.com</code> also blocks <code>m.youtube.com</code>.</p>
+      <p class="muted small">Subdomains are included: <code>youtube.com</code> also blocks <code>m.youtube.com</code>.
+        To keep one open, add it as <em>Never (allow)</em>: <code>music.youtube.com</code> then stays open while
+        <code>youtube.com</code> is blocked. The most specific domain wins.</p>
       <ul id="site-list" class="item-list"></ul>
       <p id="no-sites" class="muted hidden">No sites yet.</p>
     </section>

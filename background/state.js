@@ -55,6 +55,13 @@ export function saveState(...keys) {
   return browserApi.storage.local.set(Object.fromEntries(entries));
 }
 
+/** Takes a site off the list, with its unlock and pending mode switch. */
+export function removeSite(domain) {
+  state.sites = state.sites.filter((site) => site.domain !== domain);
+  delete state.unlocks[domain];
+  delete state.pendingChanges.siteModes[domain];
+}
+
 export function findSiteByDomain(domain) {
   return state.sites.find((site) => site.domain === domain);
 }

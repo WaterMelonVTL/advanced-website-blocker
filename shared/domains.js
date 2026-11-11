@@ -50,3 +50,18 @@ export function webHostnameOf(url) {
 export function isSameOrSubdomain(hostname, domain) {
   return hostname === domain || hostname.endsWith("." + domain);
 }
+
+/** The most specific site covering this hostname: music.youtube.com beats youtube.com. */
+export function findMostSpecificSite(sites, hostname) {
+  if (!hostname) return null;
+
+  const matchingSites = sites.filter((site) => isSameOrSubdomain(hostname, site.domain));
+  const moreSpecific = (best, site) => (site.domain.length > best.domain.length ? site : best);
+  return matchingSites.length > 0 ? matchingSites.reduce(moreSpecific) : null;
+}
+
+/** The most specific site covering `domain`, other than the site for `domain` itself. */
+export function findParentSite(sites, domain) {
+  const otherSites = sites.filter((site) => site.domain !== domain);
+  return findMostSpecificSite(otherSites, domain);
+}

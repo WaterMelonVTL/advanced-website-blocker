@@ -1,19 +1,15 @@
 import { BLOCK_MODE, UNLOCK_PHASE } from "../shared/constants.js";
-import { isSameOrSubdomain, webHostnameOf } from "../shared/domains.js";
+import { findMostSpecificSite, webHostnameOf } from "../shared/domains.js";
 import { isAnyScheduleActive } from "../shared/schedules.js";
 import { state } from "./state.js";
 
-/** The most specific listed site covering this hostname: music.youtube.com beats youtube.com. */
 export function findSiteForHostname(hostname) {
-  if (!hostname) return null;
-
-  const matchingSites = state.sites.filter((site) => isSameOrSubdomain(hostname, site.domain));
-  const moreSpecific = (best, site) => (site.domain.length > best.domain.length ? site : best);
-  return matchingSites.length > 0 ? matchingSites.reduce(moreSpecific) : null;
+  return findMostSpecificSite(state.sites, hostname);
 }
 
 /** While a schedule change waits for its cooldown, the old and the new schedules both block. */
 export function isInBlockPeriod(site, date = new Date()) {
+  if (site.mode === BLOCK_MODE.NEVER) return false;
   if (site.mode === BLOCK_MODE.ALWAYS) return true;
 
   const pendingSchedules = state.pendingChanges.schedules?.schedules ?? [];

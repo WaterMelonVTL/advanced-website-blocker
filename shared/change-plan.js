@@ -1,4 +1,5 @@
-import { BLOCK_MODE } from "./constants.js";
+import { BLOCK_MODE, BLOCK_MODE_LABELS, BLOCK_MODE_STRICTNESS } from "./constants.js";
+import { findParentSite } from "./domains.js";
 import { blocksAtLeastAsMuch, describeSchedule, schedulesAreEqual } from "./schedules.js";
 
 /**
@@ -14,7 +15,7 @@ export const CHANGE_TYPE = Object.freeze({
   ADD_SITE: "addSite",
   SET_MODE: "setMode",
   CANCEL_MODE_SWITCH: "cancelModeSwitch",
-  SCHEDULE_REMOVAL: "scheduleRemoval",
+  REMOVE_SITE: "removeSite",
   CANCEL_REMOVAL: "cancelRemoval",
   SET_SCHEDULES: "setSchedules",
   SET_SETTING: "setSetting",
@@ -32,10 +33,15 @@ const SETTING_LABELS = Object.freeze({
   unlockMinutes: "Unlock duration",
 });
 
-const MODE_LABELS = Object.freeze({
-  [BLOCK_MODE.ALWAYS]: "Always",
-  [BLOCK_MODE.ON_SCHEDULE]: "On schedule",
+const MODE_SWITCH_DESCRIPTIONS = Object.freeze({
+  [BLOCK_MODE.ALWAYS]: "block always",
+  [BLOCK_MODE.ON_SCHEDULE]: "only block on schedule",
+  [BLOCK_MODE.NEVER]: "never block (allow)",
 });
+
+function weakensBlocking(wantedMode, currentMode) {
+  return BLOCK_MODE_STRICTNESS[wantedMode] < BLOCK_MODE_STRICTNESS[currentMode];
+}
 
 function upcomingModeOf(site, config) {
   return config.pendingChanges.siteModes[site.domain]?.mode ?? site.mode;
@@ -73,7 +79,7 @@ export function planChanges(config, draft) {
 
 function planSiteChanges(config, draftSite) {
   const confirmedSite = config.sites.find((site) => site.domain === draftSite.domain);
-  if (!confirmedSite) return draftSite.removing ? [] : [planNewSite(draftSite)];
+  if (!confirmedSite) return draftSite.removing ? [] : [planNewSite(config, draftSite)];
 
   return [
     ...planModeChange(config, confirmedSite, draftSite.mode),
@@ -81,13 +87,31 @@ function planSiteChanges(config, draftSite) {
   ];
 }
 
-function planNewSite({ domain, mode }) {
+function planNewSite(config, draftSite) {
+  if (draftSite.mode === BLOCK_MODE.NEVER) return planNewAllowedSite(config, draftSite);
+  return {
+    type: CHANGE_TYPE.ADD_SITE,
+    domain: draftSite.domain,
+    mode: draftSite.mode,
+    waitsForCooldown: false,
+    description: `Block ${draftSite.domain} (${BLOCK_MODE_LABELS[draftSite.mode]})`,
+  };
+}
+
+/**
+ * Allowing a subdomain of a blocked site weakens blocking: until the cooldown ends, the new site
+ * keeps its parent's mode (`modeDuringCooldown`).
+ */
+function planNewAllowedSite(config, { domain, mode }) {
+  const parentSite = findParentSite(config.sites, domain);
+  const isException = Boolean(parentSite) && parentSite.mode !== BLOCK_MODE.NEVER;
   return {
     type: CHANGE_TYPE.ADD_SITE,
     domain,
     mode,
-    waitsForCooldown: false,
-    description: `Block ${domain} (${MODE_LABELS[mode]})`,
+    modeDuringCooldown: parentSite?.mode,
+    waitsForCooldown: isException,
+    description: isException ? `Allow ${domain} (exception to ${parentSite.domain})` : `Allow ${domain}`,
   };
 }
 
@@ -100,29 +124,29 @@ function planModeChange(config, confirmedSite, wantedMode) {
       type: CHANGE_TYPE.CANCEL_MODE_SWITCH,
       domain,
       waitsForCooldown: false,
-      description: `${domain}: keep "${MODE_LABELS[confirmedSite.mode]}" (cancel the pending switch)`,
+      description: `${domain}: keep "${BLOCK_MODE_LABELS[confirmedSite.mode]}" (cancel the pending switch)`,
     }];
   }
 
-  const loosensBlocking = wantedMode === BLOCK_MODE.ON_SCHEDULE;
   return [{
     type: CHANGE_TYPE.SET_MODE,
     domain,
     mode: wantedMode,
-    waitsForCooldown: loosensBlocking,
-    description: loosensBlocking ? `${domain}: only block on schedule` : `${domain}: block always`,
+    waitsForCooldown: weakensBlocking(wantedMode, confirmedSite.mode),
+    description: `${domain}: ${MODE_SWITCH_DESCRIPTIONS[wantedMode]}`,
   }];
 }
 
+/** Removing an allowed site only makes blocking stricter, so it applies right away. */
 function planRemovalChange(confirmedSite, wantsRemoval) {
   const { domain } = confirmedSite;
   const isRemovalScheduled = Boolean(confirmedSite.removeAt);
 
   if (wantsRemoval && !isRemovalScheduled) {
     return [{
-      type: CHANGE_TYPE.SCHEDULE_REMOVAL,
+      type: CHANGE_TYPE.REMOVE_SITE,
       domain,
-      waitsForCooldown: true,
+      waitsForCooldown: confirmedSite.mode !== BLOCK_MODE.NEVER,
       description: `Remove ${domain} from the list`,
     }];
   }

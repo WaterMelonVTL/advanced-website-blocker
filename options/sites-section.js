@@ -1,4 +1,4 @@
-import { UNLOCK_PHASE } from "../shared/constants.js";
+import { BLOCK_MODE, BLOCK_MODE_LABELS, UNLOCK_PHASE } from "../shared/constants.js";
 import { byDomain, byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { domainFromUserInput } from "../shared/domains.js";
 import { formatClockTime, formatDayAndTime, pluralize } from "../shared/format.js";
@@ -87,6 +87,8 @@ function describeStatus(draftSite, confirmedSite) {
   if (draftSite.removing && !isRemovalConfirmed) return { text: "Remove (not confirmed)", variant: "draft" };
   if (draftSite.removing) return { text: `Leaves list ${formatDayAndTime(confirmedSite.removeAt)}`, variant: "removing" };
 
+  if (confirmedSite.mode === BLOCK_MODE.NEVER) return { text: "Allowed", variant: "open" };
+
   const { unlock } = confirmedSite;
   if (unlock.phase === UNLOCK_PHASE.OPEN) return { text: `Unlocked until ${formatClockTime(unlock.closesAt)}`, variant: "open" };
   if (unlock.phase === UNLOCK_PHASE.WAITING) return { text: `Unlocks at ${formatClockTime(unlock.opensAt)}`, variant: "" };
@@ -98,7 +100,7 @@ function describePendingModeSwitch(draftSite, confirmedSite) {
   const modeSwitch = confirmedSite?.pendingModeSwitch;
   const isStillWanted = modeSwitch && draftSite.mode === modeSwitch.mode;
   if (!isStillWanted) return "";
-  return `Switches to "On schedule" on ${formatDayAndTime(modeSwitch.applyAt)}`;
+  return `Switches to "${BLOCK_MODE_LABELS[modeSwitch.mode]}" on ${formatDayAndTime(modeSwitch.applyAt)}`;
 }
 
 function describeVisitsToday(confirmedSite) {
@@ -107,9 +109,10 @@ function describeVisitsToday(confirmedSite) {
 }
 
 function createModeSelect(draftSite) {
+  const options = Object.values(BLOCK_MODE)
+    .map((mode) => createElement("option", { value: mode, textContent: BLOCK_MODE_LABELS[mode] }));
   const select = createElement("select", { ariaLabel: `When to block ${draftSite.domain}`, disabled: draftSite.removing },
-    createElement("option", { value: "always", textContent: "Always" }),
-    createElement("option", { value: "schedule", textContent: "On schedule" }));
+    ...options);
   select.value = draftSite.mode;
   select.addEventListener("change", () => setMode(draftSite, select.value));
   return select;
