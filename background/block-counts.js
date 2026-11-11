@@ -1,4 +1,3 @@
-// How many times each site's block page was shown today.
 import { findSiteByDomain, saveState, state } from "./state.js";
 
 /** "2026-11-11" in local time, so the count resets at local midnight. */
@@ -7,6 +6,7 @@ function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`;
 }
 
+/** Counts one more time the block page was shown for this site today. */
 export async function recordBlockedVisit(domain) {
   if (!findSiteByDomain(domain)) return;
 

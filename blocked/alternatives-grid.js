@@ -1,11 +1,10 @@
-// The "Go there instead" grid.
 import { createElement, byId, setVisible } from "../shared/dom.js";
 import { parseUrl } from "../shared/domains.js";
 
 let renderedListSignature = "";
 
+/** Only re-renders when the list changed, since re-rendering reloads every icon. */
 export function renderAlternatives(alternatives) {
-  // Re-rendering would reload every icon, so only do it when the list actually changed.
   const listSignature = JSON.stringify(alternatives);
   if (listSignature === renderedListSignature) return;
   renderedListSignature = listSignature;

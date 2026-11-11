@@ -3,15 +3,16 @@ export const BLOCK_MODE = Object.freeze({
   ON_SCHEDULE: "schedule",
 });
 
+/** NONE: no unlock. WAITING: sentence typed, delay running. OPEN: site open until the unlock closes. */
 export const UNLOCK_PHASE = Object.freeze({
-  NONE: "none",       // the site is not being unlocked
-  WAITING: "waiting", // sentence typed, waiting for the delay to pass
-  OPEN: "open",       // the site is open until the unlock closes
+  NONE: "none",
+  WAITING: "waiting",
+  OPEN: "open",
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  waitMinutes: 5,    // delay between typing the sentence and the site opening
-  unlockMinutes: 20, // how long the site stays open
+  waitMinutes: 5,
+  unlockMinutes: 20,
 });
 
 export const SETTING_LIMITS = Object.freeze({
@@ -27,7 +28,7 @@ export const COOLDOWN_MS = 24 * 60 * MINUTE_MS;
 export const SENTENCE_PREFIX =
   "I'm sure what I'm doing is worth it, that's why I will type the following sentence: ";
 
-/** Indexed like Date#getDay(): 0 is Sunday. */
+/** Indexed like `Date#getDay()`: 0 is Sunday. */
 export const DAY_NAMES = Object.freeze(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
 export const MONDAY_FIRST_DAYS = Object.freeze([1, 2, 3, 4, 5, 6, 0]);
 

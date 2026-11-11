@@ -1,11 +1,8 @@
-// Toolbar popup: the status of the current site, a "Block this site" button,
-// and the sites that are unlocked right now.
 import { isBlockPageAddress, parseBlockPageAddress } from "../shared/block-page-address.js";
-import { browserApi } from "../shared/browser.js";
+import { askBackground, browserApi, MESSAGE } from "../shared/browser.js";
 import { UNLOCK_PHASE } from "../shared/constants.js";
 import { byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { formatClockTime, formatCountdown, formatDayAndTime } from "../shared/format.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
 
 const REFRESH_INTERVAL_MS = 1000;
 const LOCK_CONFIRMATION_TIMEOUT_MS = 4000;
@@ -21,19 +18,21 @@ async function render() {
   await renderUnlockedSites();
 }
 
-// ---------------------------------------------------------------------------
-// The site in the active tab
-// ---------------------------------------------------------------------------
 async function getActiveTabUrl() {
   const [activeTab] = await browserApi.tabs.query({ active: true, currentWindow: true });
   return activeTab?.url ?? "";
 }
 
-/** On the block page, talk about the blocked site rather than the extension page. */
+/** On the block page, describe the blocked site rather than the extension page. */
 function addressToDescribe(tabUrl) {
   if (!isBlockPageAddress(tabUrl)) return tabUrl;
   const { domain } = parseBlockPageAddress(new URL(tabUrl).search);
   return domain ? `https://${domain}/` : tabUrl;
+}
+
+function renderBlockControls(canBeBlocked) {
+  setVisible(byId("block-form"), canBeBlocked && !popupState.isConfirmingBlock);
+  setVisible(byId("block-confirmation"), canBeBlocked && popupState.isConfirmingBlock);
 }
 
 async function renderActiveSite() {
@@ -42,10 +41,7 @@ async function renderActiveSite() {
     url: addressToDescribe(popupState.activeTabUrl),
   });
 
-  const canBeBlocked = Boolean(hostname) && !site;
-  setVisible(byId("block-form"), canBeBlocked && !popupState.isConfirmingBlock);
-  setVisible(byId("block-confirmation"), canBeBlocked && popupState.isConfirmingBlock);
-
+  renderBlockControls(Boolean(hostname) && !site);
   byId("site-name").textContent = site?.domain ?? (domain || hostname || "This page can't be blocked");
   byId("site-status").textContent = describeActiveSiteStatus(hostname, site);
   byId("confirmation-domain").textContent = domain || hostname;
@@ -81,9 +77,6 @@ function setConfirmingBlock(isConfirming) {
   render();
 }
 
-// ---------------------------------------------------------------------------
-// Unlocked sites, with a two-click "Lock now"
-// ---------------------------------------------------------------------------
 async function renderUnlockedSites() {
   const { sites } = await askBackground(MESSAGE.GET_OVERVIEW);
   const unlockedSites = sites.filter((site) => site.unlock.phase !== UNLOCK_PHASE.NONE);
@@ -104,6 +97,7 @@ function describeTimeLeft(unlock) {
   return `opens in ${formatCountdown(unlock.opensAt - Date.now())}`;
 }
 
+/** "Lock now" takes two clicks: the first one turns the button into "Sure?" for a few seconds. */
 function createLockButton(site) {
   const isAwaitingConfirmation = popupState.domainsAwaitingLockConfirmation.has(site.domain);
   const idleLabel = site.unlock.phase === UNLOCK_PHASE.OPEN ? "Lock now" : "Cancel";
@@ -135,14 +129,15 @@ function askForLockConfirmation(domain) {
   render();
 }
 
-// ---------------------------------------------------------------------------
+function openOptionsPage() {
+  browserApi.runtime.openOptionsPage();
+  window.close();
+}
+
 byId("block-site").addEventListener("click", () => setConfirmingBlock(true));
 byId("cancel-block").addEventListener("click", () => setConfirmingBlock(false));
 byId("confirm-block").addEventListener("click", blockActiveSite);
-byId("open-options").addEventListener("click", () => {
-  browserApi.runtime.openOptionsPage();
-  window.close();
-});
+byId("open-options").addEventListener("click", openOptionsPage);
 
 render();
 setInterval(render, REFRESH_INTERVAL_MS);

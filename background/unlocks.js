@@ -1,20 +1,46 @@
-// Unlocking a site: after the sentence is typed, the site opens once the wait is over,
-// and stays open until the unlock closes.
 import { browserApi } from "../shared/browser.js";
-import { MINUTE_MS, UNLOCK_PHASE } from "../shared/constants.js";
+import { MINUTE_MS, SENTENCE_PREFIX, UNLOCK_PHASE } from "../shared/constants.js";
+import { generateRandomSentence, isTypedTextCorrect } from "../shared/sentence.js";
 import { getUnlock } from "./blocking.js";
-import { syncBlockRules } from "./block-rules.js";
-import { discardChallenge, isChallengeAnswered } from "./challenges.js";
 import { enforceBlocking } from "./enforcement.js";
 import { findSiteByDomain, saveState, state } from "./state.js";
 
-/** Small margin so the alarm fires just after the moment, not just before. */
-const ALARM_MARGIN_MS = 250;
+/** Session storage keeps each block page's sentence alive if the background is unloaded while the user types. */
+const sessionStorage = browserApi.storage.session;
 
-const alarmNames = (domain) => ({
-  opens: `unlock-opens:${domain}`,
-  closes: `unlock-closes:${domain}`,
-});
+function challengeKeyFor(domain) {
+  return `challenge:${domain}`;
+}
+
+async function readSentence(domain) {
+  const key = challengeKeyFor(domain);
+  const stored = await sessionStorage.get(key);
+  return stored[key];
+}
+
+/** The full text to type: the fixed prefix followed by this domain's random sentence. */
+export async function getOrCreateExpectedText(domain) {
+  const existingSentence = await readSentence(domain);
+  const sentence = existingSentence ?? generateRandomSentence();
+  if (!existingSentence) await sessionStorage.set({ [challengeKeyFor(domain)]: sentence });
+  return SENTENCE_PREFIX + sentence;
+}
+
+async function discardChallenge(domain) {
+  await sessionStorage.remove(challengeKeyFor(domain));
+}
+
+/** "Never mind": the next attempt gets a new sentence. */
+export async function replaceChallenge(domain) {
+  await discardChallenge(domain);
+  return getOrCreateExpectedText(domain);
+}
+
+async function isChallengeAnswered(domain, typedText) {
+  const sentence = await readSentence(domain);
+  if (!sentence) return false;
+  return isTypedTextCorrect(typedText, SENTENCE_PREFIX + sentence);
+}
 
 function createUnlockWindow(startedAt) {
   const opensAt = startedAt + state.settings.waitMinutes * MINUTE_MS;
@@ -22,17 +48,11 @@ function createUnlockWindow(startedAt) {
   return { opensAt, closesAt };
 }
 
-/** Alarms wake the background at both moments; the housekeeping they trigger updates the rules. */
-function scheduleUnlockAlarms(domain, { opensAt, closesAt }) {
-  const names = alarmNames(domain);
-  browserApi.alarms.create(names.opens, { when: opensAt + ALARM_MARGIN_MS });
-  browserApi.alarms.create(names.closes, { when: closesAt + ALARM_MARGIN_MS });
-}
-
-function cancelUnlockAlarms(domain) {
-  const names = alarmNames(domain);
-  browserApi.alarms.clear(names.opens);
-  browserApi.alarms.clear(names.closes);
+async function openUnlockWindow(domain) {
+  await discardChallenge(domain);
+  state.unlocks[domain] = createUnlockWindow(Date.now());
+  await saveState("unlocks");
+  await enforceBlocking();
 }
 
 export async function startUnlock(domain, typedText) {
@@ -44,19 +64,13 @@ export async function startUnlock(domain, typedText) {
   const isAnswered = await isChallengeAnswered(domain, typedText);
   if (!isAnswered) return { ok: false, error: "The text doesn't match. Check it and try again." };
 
-  await discardChallenge(domain);
-  state.unlocks[domain] = createUnlockWindow(Date.now());
-  await saveState("unlocks");
-  scheduleUnlockAlarms(domain, state.unlocks[domain]);
-  await syncBlockRules(); // with a 0-minute wait the site is open right away
-
+  await openUnlockWindow(domain);
   return { ok: true, unlock: getUnlock(domain) };
 }
 
 /** Ends an unlock early, or cancels one that is still waiting. */
 export async function lockNow(domain) {
   delete state.unlocks[domain];
-  cancelUnlockAlarms(domain);
   await saveState("unlocks");
   await enforceBlocking();
 }

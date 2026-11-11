@@ -1,25 +1,17 @@
-// Applies everything whose time has come: pending changes after their cooldown, scheduled
-// removals, closed unlocks. All of these are timestamps, so it doesn't matter whether this
-// runs from the alarm or lazily when the user opens a page: the result is the same.
-import { browserApi } from "../shared/browser.js";
 import { enforceBlocking } from "./enforcement.js";
 import { findSiteByDomain, saveState, state, stateReady } from "./state.js";
 
-const HOUSEKEEPING_ALARM = "housekeeping";
-const HOUSEKEEPING_PERIOD_MINUTES = 0.5; // the shortest period Chrome allows
-
-export async function ensureHousekeepingAlarm() {
-  // Creating an alarm again resets its timer, so only create it when it's missing.
-  const existingAlarm = await browserApi.alarms.get(HOUSEKEEPING_ALARM);
-  if (!existingAlarm) browserApi.alarms.create(HOUSEKEEPING_ALARM, { periodInMinutes: HOUSEKEEPING_PERIOD_MINUTES });
-}
-
+/** Runs when the background wakes up: applies what's due, then enforces blocking. */
 export async function runHousekeeping() {
   await applyDueChanges();
-  await enforceBlocking(); // also catches schedule periods starting and ending
+  await enforceBlocking();
 }
 
-/** Returns true when something changed. */
+/**
+ * Applies everything whose time has come: pending changes, removals, closed unlocks.
+ * All of these are timestamps, so running it from an alarm or lazily from a request gives the same result.
+ * @returns {Promise<boolean>} whether anything changed
+ */
 export async function applyDueChanges(now = Date.now()) {
   await stateReady;
   const changedKeys = new Set([
@@ -35,8 +27,7 @@ export async function applyDueChanges(now = Date.now()) {
   return true;
 }
 
-// Each step below returns the state keys it changed.
-
+/** @returns {string[]} the state keys it changed, like every step below */
 function applyDueScheduleChange(now) {
   const pendingSchedules = state.pendingChanges.schedules;
   if (!pendingSchedules || pendingSchedules.applyAt > now) return [];
@@ -69,16 +60,18 @@ function applyDueModeSwitches(now) {
   return dueDomains.length > 0 ? ["sites", "pendingChanges"] : [];
 }
 
+function forgetSite(domain) {
+  delete state.unlocks[domain];
+  delete state.pendingChanges.siteModes[domain];
+}
+
 function removeSitesDueForRemoval(now) {
   const isDueForRemoval = (site) => site.removeAt && site.removeAt <= now;
   const removedDomains = state.sites.filter(isDueForRemoval).map((site) => site.domain);
   if (removedDomains.length === 0) return [];
 
   state.sites = state.sites.filter((site) => !isDueForRemoval(site));
-  for (const domain of removedDomains) {
-    delete state.unlocks[domain];
-    delete state.pendingChanges.siteModes[domain];
-  }
+  removedDomains.forEach(forgetSite);
   return ["sites", "unlocks", "pendingChanges"];
 }
 

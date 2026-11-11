@@ -1,14 +1,10 @@
-// Shared state of the options page.
-//   editor.config: what the background has confirmed (an overview, see background/site-views.js)
-//   editor.draft:  what the user is editing; nothing reaches the background until "Confirm"
-//
-// Sections re-render through two notifications:
-//   notifyStructureChanged(): rows were added or removed, so every section re-renders.
-//   notifyValueEdited(): a value was edited in place, so only the parts that depend on
-//   values re-render, and the input the user is typing in keeps its focus.
+import { askBackground, MESSAGE } from "../shared/browser.js";
 import { buildDraft, planChanges } from "../shared/change-plan.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
 
+/**
+ * Shared state of the options page.
+ * `config` is what the background has confirmed; `draft` is what the user edits until "Confirm".
+ */
 export const editor = {
   config: null,
   draft: null,
@@ -25,10 +21,12 @@ export function onValueEdited(listener) {
   valueListeners.push(listener);
 }
 
+/** Rows were added or removed: every section re-renders. */
 export function notifyStructureChanged() {
   structureListeners.forEach((listener) => listener());
 }
 
+/** A value was edited in place: only what depends on values re-renders, so the focused input keeps focus. */
 export function notifyValueEdited() {
   valueListeners.forEach((listener) => listener());
 }
@@ -42,7 +40,6 @@ export function hasUnconfirmedChanges() {
   return plannedChanges().length > 0;
 }
 
-/** Reloads the confirmed config. Unconfirmed edits are kept unless asked otherwise. */
 export async function reloadConfig({ keepUnconfirmedEdits }) {
   editor.config = await askBackground(MESSAGE.GET_OVERVIEW);
   if (!keepUnconfirmedEdits || !hasUnconfirmedChanges()) editor.draft = buildDraft(editor.config);

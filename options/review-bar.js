@@ -1,6 +1,6 @@
-// The bar at the bottom listing unconfirmed changes, with "Discard" and "Confirm".
+import { attemptAsync } from "../shared/attempt.js";
+import { askBackground, MESSAGE } from "../shared/browser.js";
 import { byId, createElement, setVisible } from "../shared/dom.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
 import { discardDraft, editor, plannedChanges, reloadConfig } from "./editor.js";
 
 export function initReviewBar() {
@@ -24,13 +24,15 @@ function renderChangeGroup(groupName, changes) {
   byId(`${groupName}-change-list`).replaceChildren(...items);
 }
 
+async function commitAndReload() {
+  await askBackground(MESSAGE.COMMIT_DRAFT, { draft: editor.draft });
+  await reloadConfig({ keepUnconfirmedEdits: false });
+}
+
 async function confirmDraft() {
   const confirmButton = byId("confirm-draft");
   confirmButton.disabled = true;
-  try {
-    await askBackground(MESSAGE.COMMIT_DRAFT, { draft: editor.draft });
-    await reloadConfig({ keepUnconfirmedEdits: false });
-  } finally {
-    confirmButton.disabled = false;
-  }
+  const [error] = await attemptAsync(commitAndReload);
+  confirmButton.disabled = false;
+  if (error) console.error("Advanced Website Blocker: could not confirm the changes", error);
 }

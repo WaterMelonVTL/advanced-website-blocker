@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Friction Blocker",
-  "version": "2.0.0",
+  "name": "Advanced Website Blocker",
+  "version": "2.1.0",
   "description": "Block distracting websites, on a schedule if you like, and make unblocking take some deliberate effort.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "friction-blocker@local",
+      "id": "advanced-website-blocker@local",
       "strict_min_version": "128.0",
       "data_collection_permissions": { "required": ["none"] }
     }
@@ -29,7 +29,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Friction Blocker",
+    "default_title": "Advanced Website Blocker",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

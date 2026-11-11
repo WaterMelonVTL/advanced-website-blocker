@@ -1,10 +1,10 @@
-// What the pages get to see: sites enriched with their current status.
 import { UNLOCK_PHASE } from "../shared/constants.js";
 import { domainFromUserInput, webHostnameOf } from "../shared/domains.js";
 import { findSiteForHostname, getUnlock, isInBlockPeriod } from "./blocking.js";
 import { blockedVisitsToday } from "./block-counts.js";
 import { findSiteByDomain, state } from "./state.js";
 
+/** A site enriched with its current status, as the pages see it. */
 function describeSite(site) {
   const inBlockPeriod = isInBlockPeriod(site);
   const unlock = getUnlock(site.domain);
@@ -18,7 +18,7 @@ function describeSite(site) {
   };
 }
 
-/** Everything the options page and the popup show. Also a valid `config` for planChanges(). */
+/** Everything the options page and the popup show. Also a valid `config` for `planChanges`. */
 export function buildOverview() {
   const describedSites = state.sites.map(describeSite).sort((first, second) => first.domain.localeCompare(second.domain));
   return {

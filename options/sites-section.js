@@ -1,4 +1,3 @@
-// "Blocked sites": the list of sites with their mode and a remove/keep/undo button.
 import { UNLOCK_PHASE } from "../shared/constants.js";
 import { byDomain, byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { domainFromUserInput } from "../shared/domains.js";
@@ -18,9 +17,6 @@ export function renderSitesSection() {
   byId("site-list").replaceChildren(...rows);
 }
 
-// ---------------------------------------------------------------------------
-// Editing the draft
-// ---------------------------------------------------------------------------
 function showAddSiteError(message) {
   byId("add-site-error").textContent = message;
   setVisible(byId("add-site-error"), Boolean(message));
@@ -55,10 +51,7 @@ function setMode(draftSite, mode) {
   notifyStructureChanged();
 }
 
-// ---------------------------------------------------------------------------
-// Rendering one row
-// `confirmedSite` is undefined for a site that was added but not confirmed yet.
-// ---------------------------------------------------------------------------
+/** `confirmedSite` is undefined for a site that was added but not confirmed yet. */
 function createSiteRow(draftSite, confirmedSite) {
   return createElement("li", {},
     createSiteLabel(draftSite, confirmedSite),

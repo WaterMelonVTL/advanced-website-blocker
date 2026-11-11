@@ -1,5 +1,3 @@
-// The "Go there instead" sites shown on the block page. Not part of the cooldown: changing
-// them never weakens blocking.
 import { isWebAddress } from "../shared/block-page-address.js";
 import { saveState, state } from "./state.js";
 
@@ -12,6 +10,7 @@ function sanitizeAlternative(alternative) {
   };
 }
 
+/** "Go there instead" sites never weaken blocking, so they save immediately, without a cooldown. */
 export async function saveAlternatives(alternatives) {
   state.alternatives = (alternatives ?? [])
     .map(sanitizeAlternative)

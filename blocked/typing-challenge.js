@@ -1,7 +1,6 @@
-// The "type this sentence to unlock" form.
-import { createElement, byId, setVisible } from "../shared/dom.js";
+import { askBackground, MESSAGE } from "../shared/browser.js";
+import { byId, createElement, setVisible } from "../shared/dom.js";
 import { pluralize } from "../shared/format.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
 import { countCorrectlyTypedCharacters, isTypedTextCorrect } from "../shared/sentence.js";
 
 const typedTextInput = byId("typed-text");

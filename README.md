@@ -1,4 +1,4 @@
-# Friction Blocker
+# Advanced Website Blocker
 
 Blocks distracting sites, either all the time or during set periods, and makes unblocking take a deliberate effort without making it impossible.
 One Manifest V3 codebase for **Firefox (128+), Chrome, Brave and Edge**.
@@ -23,26 +23,26 @@ It stays installed across restarts. If you move or delete the folder, the extens
 ### Firefox
 - **Testing:** `about:debugging#/runtime/this-firefox` → "Load Temporary Add-on…" → pick `manifest.json`. It's removed when Firefox restarts.
 - **Permanent:** sign it for free as an *unlisted* add-on with `npx web-ext sign --channel=unlisted --api-key=... --api-secret=...` (keys from addons.mozilla.org → Developer Hub → API keys), then open the `.xpi`.
-- In `about:addons` → Friction Blocker, allow **Run in Private Windows**.
+- In `about:addons` → Advanced Website Blocker, allow **Run in Private Windows**.
 - If the options page shows "needs access to all sites", click **Allow**.
 
 ## How it works
-Plain ES modules, no build step. One concern per file.
-
 **`shared/`**: used by the background and the pages
 - `change-plan.js`: compares a draft with the confirmed configuration and lists the changes, marking the ones that wait for the cooldown. The options page uses it to preview and the background uses it to apply, so the two always agree.
-- `schedules.js`: whether a period is active, and whether a new schedule blocks at least as much as the old one (checked minute by minute over the week).
-- `domains.js`, `sentence.js`, `format.js`, `block-page-address.js`, `dom.js`, `messages.js`, `constants.js`, `browser.js`
+- `schedules.js`: whether a period is active, when the next one starts or ends, and whether a new schedule blocks at least as much as the old one (checked minute by minute over the week).
+- `attempt.js`: the `[error, value]` wrapper used instead of try/catch.
+- `browser.js` (browser API and messages to the background), `domains.js`, `sentence.js`, `format.js`, `block-page-address.js`, `dom.js`, `constants.js`
 
 **`background/`**
 - `main.js`: entry point, registers the listeners
 - `state.js`: in-memory state, persisted to storage
 - `blocking.js`: is this site blocked right now?
 - `block-rules.js`: turns the state into `declarativeNetRequest` redirect rules
-- `open-tabs.js`, `enforcement.js`: send already-open tabs to the block page
-- `unlocks.js`, `challenges.js`: the typed sentence and the unlock window
-- `commit-draft.js`, `draft-validation.js`: apply a confirmed draft
-- `housekeeping.js`: apply what's due (cooldowns, removals, closed unlocks). It runs every 30 seconds and before answering any page, so nothing depends on the background staying alive.
+- `enforcement.js`: after any change, updates the rules, sends already-open tabs to the block page, and plans the next wake-up
+- `unlocks.js`: the typed sentence and the unlock window
+- `commit-draft.js`: checks and applies a confirmed draft
+- `housekeeping.js`: apply what's due (cooldowns, removals, closed unlocks). It runs when the background wakes up and before answering any page.
+- `wake-up.js`: no polling. The background sleeps until the next moment something can change (a schedule period starting or ending, an unlock opening or closing, a cooldown or removal becoming due) and sets one alarm for exactly that time. A 30-minute safety check catches anything missed, like a change of system clock.
 - `messages.js`: answers the pages' requests
 
 **`blocked/`, `popup/`, `options/`**: the block page, toolbar popup and settings page. Each section of a page is its own module.

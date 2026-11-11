@@ -1,10 +1,9 @@
-// Entry point of the background (a service worker in Chrome/Brave/Edge, an event page in Firefox).
-// Listeners are registered at the top level so the browser can wake the background for them.
 import { browserApi } from "../shared/browser.js";
-import { ensureHousekeepingAlarm, runHousekeeping } from "./housekeeping.js";
+import { runHousekeeping } from "./housekeeping.js";
 import { handleMessage } from "./messages.js";
+import { setUpSafetyCheck } from "./wake-up.js";
 
-/** Chrome ignores promises returned by onMessage listeners; sendResponse + `return true` works everywhere. */
+/** Chrome ignores promises returned by onMessage listeners; `sendResponse` + `return true` works everywhere. */
 function answerAsynchronously(handler) {
   return (message, _sender, sendResponse) => {
     const reportError = (error) => sendResponse({ ok: false, error: String(error?.message ?? error) });
@@ -14,12 +13,11 @@ function answerAsynchronously(handler) {
 }
 
 function onBrowserStart() {
-  ensureHousekeepingAlarm();
+  setUpSafetyCheck();
   runHousekeeping();
 }
 
 browserApi.runtime.onMessage.addListener(answerAsynchronously(handleMessage));
-browserApi.alarms.onAlarm.addListener(() => runHousekeeping()); // housekeeping and unlock alarms alike
+browserApi.alarms.onAlarm.addListener(() => runHousekeeping());
 browserApi.runtime.onStartup.addListener(onBrowserStart);
 browserApi.runtime.onInstalled.addListener(onBrowserStart);
-ensureHousekeepingAlarm();

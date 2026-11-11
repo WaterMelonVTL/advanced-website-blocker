@@ -1,4 +1,3 @@
-// "Schedules": the periods during which "On schedule" sites are blocked.
 import { DAY_NAMES, MONDAY_FIRST_DAYS } from "../shared/constants.js";
 import { byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { formatDayAndTime } from "../shared/format.js";
@@ -18,9 +17,6 @@ export function renderSchedulesSection() {
   byId("schedule-list").replaceChildren(...schedules.map(createScheduleRow));
 }
 
-// ---------------------------------------------------------------------------
-// Editing the draft
-// ---------------------------------------------------------------------------
 function addPeriod() {
   editor.draft.schedules.push({ id: crypto.randomUUID(), ...structuredClone(NEW_PERIOD) });
   notifyStructureChanged();
@@ -47,9 +43,6 @@ function setTime(schedule, field, timeOfDay) {
   notifyValueEdited();
 }
 
-// ---------------------------------------------------------------------------
-// Rendering
-// ---------------------------------------------------------------------------
 function renderPendingScheduleNotice() {
   const pendingSchedules = editor.config.pendingChanges.schedules;
   setVisible(byId("pending-schedule-notice"), Boolean(pendingSchedules));

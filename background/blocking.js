@@ -1,4 +1,3 @@
-// Decides whether a site is blocked right now.
 import { BLOCK_MODE, UNLOCK_PHASE } from "../shared/constants.js";
 import { isSameOrSubdomain, webHostnameOf } from "../shared/domains.js";
 import { isAnyScheduleActive } from "../shared/schedules.js";
@@ -13,10 +12,10 @@ export function findSiteForHostname(hostname) {
   return matchingSites.length > 0 ? matchingSites.reduce(moreSpecific) : null;
 }
 
+/** While a schedule change waits for its cooldown, the old and the new schedules both block. */
 export function isInBlockPeriod(site, date = new Date()) {
   if (site.mode === BLOCK_MODE.ALWAYS) return true;
 
-  // While a schedule change waits for its cooldown, the old and the new schedules both block.
   const pendingSchedules = state.pendingChanges.schedules?.schedules ?? [];
   return isAnyScheduleActive(state.schedules, date) || isAnyScheduleActive(pendingSchedules, date);
 }

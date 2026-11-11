@@ -1,11 +1,14 @@
-// Compares what the user is editing (the draft) with the confirmed configuration and lists the
-// changes that "Confirm" would make. Changes that weaken blocking wait for the cooldown.
-// The options page uses this to preview, the background uses it to apply, so both always agree.
-//
-// config: { sites, schedules, settings, pendingChanges: { schedules, settings, siteModes } }
-// draft:  { sites: [{ domain, mode, removing }], schedules, settings }
 import { BLOCK_MODE } from "./constants.js";
 import { blocksAtLeastAsMuch, describeSchedule, schedulesAreEqual } from "./schedules.js";
+
+/**
+ * Compares a draft (what the user is editing) with the confirmed config and lists what "Confirm" changes.
+ * The options page uses it to preview and the background to apply, so both always agree.
+ *
+ * @typedef {{ sites: object[], schedules: object[], settings: object, pendingChanges: object }} Config
+ * @typedef {{ sites: { domain: string, mode: string, removing: boolean }[], schedules: object[], settings: object }} Draft
+ * @typedef {{ type: string, waitsForCooldown: boolean, description: string }} Change
+ */
 
 export const CHANGE_TYPE = Object.freeze({
   ADD_SITE: "addSite",
@@ -18,8 +21,8 @@ export const CHANGE_TYPE = Object.freeze({
 });
 
 const IS_STRICTER_SETTING = Object.freeze({
-  waitMinutes: (proposed, current) => proposed >= current,   // a longer wait is stricter
-  unlockMinutes: (proposed, current) => proposed <= current, // a shorter unlock is stricter
+  waitMinutes: (proposed, current) => proposed >= current,
+  unlockMinutes: (proposed, current) => proposed <= current,
 });
 
 export const SETTING_KEYS = Object.freeze(Object.keys(IS_STRICTER_SETTING));
@@ -34,9 +37,6 @@ const MODE_LABELS = Object.freeze({
   [BLOCK_MODE.ON_SCHEDULE]: "On schedule",
 });
 
-// ---------------------------------------------------------------------------
-// Where the configuration is heading: confirmed values with pending changes applied
-// ---------------------------------------------------------------------------
 function upcomingModeOf(site, config) {
   return config.pendingChanges.siteModes[site.domain]?.mode ?? site.mode;
 }
@@ -49,7 +49,7 @@ function upcomingSettingValue(config, key) {
   return config.pendingChanges.settings[key]?.value ?? config.settings[key];
 }
 
-/** The starting point of an edit: the configuration as it will be once pending changes apply. */
+/** The starting point of an edit: the config as it will be once pending changes apply. */
 export function buildDraft(config) {
   return {
     sites: config.sites.map((site) => ({
@@ -62,10 +62,7 @@ export function buildDraft(config) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Planning
-// Each change: { type, waitsForCooldown, description, ...what it needs to be applied }
-// ---------------------------------------------------------------------------
+/** @returns {Change[]} */
 export function planChanges(config, draft) {
   return [
     ...draft.sites.flatMap((draftSite) => planSiteChanges(config, draftSite)),
@@ -140,20 +137,22 @@ function planRemovalChange(confirmedSite, wantsRemoval) {
   return [];
 }
 
+function describeScheduleChange(config, wantedSchedules) {
+  const isBackToConfirmed = schedulesAreEqual(wantedSchedules, config.schedules);
+  if (isBackToConfirmed) return "Schedule: keep the current one (cancel the pending change)";
+
+  const summary = wantedSchedules.length > 0 ? wantedSchedules.map(describeSchedule).join(", ") : "no periods";
+  return `Schedule → ${summary}`;
+}
+
 function planScheduleChange(config, wantedSchedules) {
   if (schedulesAreEqual(wantedSchedules, upcomingSchedules(config))) return [];
-
-  const isBackToConfirmed = schedulesAreEqual(wantedSchedules, config.schedules);
-  const loosensBlocking = !blocksAtLeastAsMuch(wantedSchedules, config.schedules);
-  const summary = wantedSchedules.length > 0 ? wantedSchedules.map(describeSchedule).join(", ") : "no periods";
 
   return [{
     type: CHANGE_TYPE.SET_SCHEDULES,
     schedules: wantedSchedules,
-    waitsForCooldown: loosensBlocking,
-    description: isBackToConfirmed
-      ? "Schedule: keep the current one (cancel the pending change)"
-      : `Schedule → ${summary}`,
+    waitsForCooldown: !blocksAtLeastAsMuch(wantedSchedules, config.schedules),
+    description: describeScheduleChange(config, wantedSchedules),
   }];
 }
 

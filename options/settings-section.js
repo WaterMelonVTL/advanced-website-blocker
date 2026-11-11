@@ -1,4 +1,3 @@
-// "Unlocking": how long to wait after typing the sentence, and how long the site stays open.
 import { SETTING_KEYS } from "../shared/change-plan.js";
 import { byId, createButton } from "../shared/dom.js";
 import { formatDayAndTime } from "../shared/format.js";

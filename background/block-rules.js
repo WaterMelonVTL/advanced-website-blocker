@@ -1,7 +1,5 @@
-// Translates the state into declarativeNetRequest rules: the browser redirects matching
-// page loads to the block page by itself, even while the background is asleep.
-import { browserApi } from "../shared/browser.js";
 import { buildBlockPageAddress, MATCHED_URL_PLACEHOLDER } from "../shared/block-page-address.js";
+import { browserApi } from "../shared/browser.js";
 import { isBlockedNow } from "./blocking.js";
 import { state, stateReady } from "./state.js";
 
@@ -12,7 +10,7 @@ function urlPatternFor(domain) {
   return `^https?://([^/?#]*\\.)?${escapedDomain}(:[0-9]+)?([/?#].*)?$`;
 }
 
-/** Longer domains are more specific, so they get a higher priority and win, like findSiteForHostname(). */
+/** Longer domains are more specific, so they get a higher priority and win, like `findSiteForHostname`. */
 function priorityFor(domain) {
   return Math.min(MAX_RULE_PRIORITY, domain.length + 1);
 }
@@ -24,8 +22,8 @@ function redirectToBlockPage(domain) {
   };
 }
 
-/** Listed sites that aren't blocked right now get an "allow" rule, so an unlocked
- *  music.youtube.com still opens while youtube.com stays blocked. */
+/** Sites that aren't blocked right now get an "allow" rule, so an unlocked music.youtube.com still opens
+ *  while youtube.com stays blocked. */
 function ruleFor(site, ruleId) {
   return {
     id: ruleId,
@@ -66,12 +64,12 @@ async function replaceRulesIfOutdated() {
 }
 
 function reportSyncFailure(error) {
-  console.error("Friction Blocker: could not update the blocking rules", error);
+  console.error("Advanced Website Blocker: could not update the blocking rules", error);
 }
 
 let queuedSync = Promise.resolve();
 
-/** Brings the browser's rules in line with the state. Calls are queued so they never overlap. */
+/** Brings the browser's redirect rules in line with the state. Calls are queued so they never overlap. */
 export function syncBlockRules() {
   queuedSync = queuedSync.then(replaceRulesIfOutdated).catch(reportSyncFailure);
   return queuedSync;

@@ -1,50 +1,70 @@
-// The page shown instead of a blocked site. It moves between three views:
-// the typing challenge, the countdown, and (rarely) "this site isn't blocked anymore".
 import { isWebAddress, parseBlockPageAddress } from "../shared/block-page-address.js";
-import { browserApi } from "../shared/browser.js";
+import { askBackground, browserApi, MESSAGE } from "../shared/browser.js";
 import { BLOCK_MODE, UNLOCK_PHASE } from "../shared/constants.js";
 import { byId, setVisible } from "../shared/dom.js";
-import { formatDayAndTime, pluralize } from "../shared/format.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
+import { formatClockTime, formatCountdown, formatDayAndTime, pluralize } from "../shared/format.js";
 import { renderAlternatives } from "./alternatives-grid.js";
-import { startCountdown, stopCountdown } from "./countdown.js";
 import { initTypingChallenge, prepareTypingChallenge } from "./typing-challenge.js";
 
 const { domain, originalUrl, isRedirectedOpenTab } = parseBlockPageAddress(location.search);
 
 const VIEW_IDS = ["typing-challenge", "countdown", "not-blocked"];
+const COUNTDOWN_TICK_MS = 250;
+
+let countdownTimer = null;
 
 function showOnlyView(viewId) {
-  for (const id of VIEW_IDS) setVisible(byId(id), id === viewId);
+  VIEW_IDS.forEach((id) => setVisible(byId(id), id === viewId));
 }
 
+/** Syncs the rules first: otherwise the redirect could still send us back here. */
 async function continueToOriginalPage() {
   if (!isWebAddress(originalUrl)) {
     showOnlyView("not-blocked");
     return;
   }
-  // Make sure the blocking rules already know about the unlock, or we'd be redirected back here.
   await askBackground(MESSAGE.SYNC_BLOCK_RULES);
   location.replace(originalUrl);
 }
 
-function explainBlock(site) {
-  byId("block-reason").textContent = site.mode === BLOCK_MODE.ALWAYS
-    ? "This site is on your block list."
-    : "This site is blocked during your scheduled focus time.";
+function describeBlockReason(site) {
+  if (site.mode === BLOCK_MODE.ALWAYS) return "This site is on your block list.";
+  return "This site is blocked during your scheduled focus time.";
+}
 
+function describeVisits(site) {
   const visitsNote = site.blockedVisitsToday > 0
     ? `You've landed here ${pluralize(site.blockedVisitsToday, "time")} today.`
     : "";
   const removalNote = site.removeAt ? `It will leave your list on ${formatDayAndTime(site.removeAt)}.` : "";
-  byId("visit-count").textContent = [visitsNote, removalNote].filter(Boolean).join(" ");
+  return [visitsNote, removalNote].filter(Boolean).join(" ");
+}
+
+function stopCountdown() {
+  clearInterval(countdownTimer);
+  countdownTimer = null;
+}
+
+function tickCountdown(unlock) {
+  const remainingMs = unlock.opensAt - Date.now();
+  byId("countdown-clock").textContent = formatCountdown(remainingMs);
+  document.title = `${formatCountdown(remainingMs)} · ${domain}`;
+  if (remainingMs > 0) return;
+
+  stopCountdown();
+  continueToOriginalPage();
 }
 
 function showCountdown(unlock) {
   showOnlyView("countdown");
   byId("unlock-section").open = true;
   setVisible(byId("gave-up-message"), false);
-  startCountdown({ domain, unlock, onFinished: continueToOriginalPage });
+  byId("unlock-window").textContent =
+    `Open from ${formatClockTime(unlock.opensAt)} until ${formatClockTime(unlock.closesAt)}.`;
+
+  stopCountdown();
+  tickCountdown(unlock);
+  countdownTimer = setInterval(() => tickCountdown(unlock), COUNTDOWN_TICK_MS);
 }
 
 async function showTypingChallenge(settings) {
@@ -59,7 +79,8 @@ async function showCurrentState() {
   const isStillBlocked = site && site.inBlockPeriod && site.unlock.phase !== UNLOCK_PHASE.OPEN;
   if (!isStillBlocked) return continueToOriginalPage();
 
-  explainBlock(site);
+  byId("block-reason").textContent = describeBlockReason(site);
+  byId("visit-count").textContent = describeVisits(site);
   if (site.unlock.phase === UNLOCK_PHASE.WAITING) return showCountdown(site.unlock);
   return showTypingChallenge(settings);
 }
@@ -78,7 +99,7 @@ async function giveUp() {
   setVisible(byId("gave-up-message"), true);
 }
 
-/** Counts real attempts only: not reloads, back/forward, or tabs we redirected ourselves. */
+/** Counts real attempts only: not reloads, back/forward, or tabs the extension redirected itself. */
 function recordVisitIfNew() {
   const navigation = performance.getEntriesByType("navigation")[0];
   const isRepeatView = navigation?.type === "reload" || navigation?.type === "back_forward";

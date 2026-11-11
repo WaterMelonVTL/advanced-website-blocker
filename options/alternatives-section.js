@@ -1,7 +1,6 @@
-// "Go there instead": saved immediately, since these never weaken blocking.
+import { askBackground, MESSAGE } from "../shared/browser.js";
 import { byId, createButton, createElement, setVisible } from "../shared/dom.js";
 import { parseUrl } from "../shared/domains.js";
-import { askBackground, MESSAGE } from "../shared/messages.js";
 import { editor } from "./editor.js";
 
 export function initAlternativesSection() {
@@ -13,6 +12,7 @@ export function renderAlternativesSection() {
   byId("alternative-list").replaceChildren(...rows);
 }
 
+/** Saved immediately: these never weaken blocking, so no cooldown or confirmation. */
 async function saveAlternatives(alternatives) {
   const result = await askBackground(MESSAGE.SAVE_ALTERNATIVES, { alternatives });
   editor.config.alternatives = result.alternatives;
